@@ -375,10 +375,6 @@ let appConfig = {
   output: {
     path: distPath,
     filename: '[name].js',
-
-    // Rename global that is used to async load chunks
-    // Avoids 3rd party js from overwriting the default name (webpackJsonp)
-    jsonpFunction: 'sntryWpJsonp',
     sourceMapFilename: '[name].js.map',
   },
   optimization: {
@@ -389,7 +385,7 @@ let appConfig = {
       cacheGroups,
     },
   },
-  devtool: IS_PRODUCTION ? 'source-map' : 'cheap-module-eval-source-map',
+  devtool: IS_PRODUCTION ? 'source-map' : 'eval-cheap-module-source-map',
 };
 
 if (IS_TEST || IS_ACCEPTANCE_TEST || IS_STORYBOOK) {
