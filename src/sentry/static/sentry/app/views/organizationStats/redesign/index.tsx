@@ -15,15 +15,12 @@ import {PageContent, PageHeader} from 'app/styles/organization';
 import space from 'app/styles/space';
 import {Organization} from 'app/types';
 
-import {OrganizationUsageStats, ProjectUsageStats} from './types';
+import {DataCategory, OrganizationUsageStats, ProjectUsageStats} from './types';
+import withOrgStats from './withOrgStats';
 
 type Props = {
   api: Client;
   organization: Organization;
-} & RouteComponentProps<{orgId: string}, {}>;
-
-type State = {
-  dataCategory: DataCategory;
 
   orgStats?: OrganizationUsageStats;
   orgStatsLoading: boolean;
@@ -32,76 +29,25 @@ type State = {
   projectStats?: ProjectUsageStats[];
   projectStatsLoading: boolean;
   projectStatsError?: Error;
+} & RouteComponentProps<{orgId: string}, {}>;
+
+type State = {
+  dataCategory: DataCategory;
 };
 
 // TODO: Move over from getsentry
-export enum DataCategory {
-  ERRORS = 'errors',
-  TRANSACTIONS = 'transactions',
-  ATTACHMENTS = 'attachments',
-}
 
 class OrganizationStats extends React.Component<Props, State> {
   state: State = {
     dataCategory: DataCategory.ERRORS,
-    orgStatsLoading: false,
-    projectStatsLoading: false,
   };
-
-  componentDidMount() {
-    this.getOrganizationStats();
-    this.getProjectsStats();
-  }
 
   setSelectedDataCategory = (dataCategory: DataCategory) => {
     this.setState({dataCategory});
   };
+
   get selectedDataCategory() {
     return capitalize(this.state.dataCategory);
-  }
-
-  /**
-   * Fetches aggregated stats of tne entire organization
-   */
-  getOrganizationStats() {
-    this.setState({orgStatsLoading: true});
-
-    const orgStats: OrganizationUsageStats = {
-      statsErrors: [],
-      statsTransactions: [],
-      statsAttachments: [],
-    };
-
-    for (let i = 0; i < 31; i++) {
-      const stats = {
-        ts: i.toString(),
-        accepted: {timesSeen: i * 100, quantity: i * 1000},
-        filtered: {timesSeen: i * 100, quantity: i * 1000},
-        dropped: {
-          overQuota: {timesSeen: i * 100, quantity: i * 1000},
-          spikeProtection: {timesSeen: i * 100, quantity: i * 1000},
-          other: {timesSeen: i * 100, quantity: i * 1000},
-        },
-      };
-
-      orgStats.statsErrors.push(stats);
-      orgStats.statsTransactions.push(stats);
-      orgStats.statsAttachments.push(stats);
-    }
-
-    setTimeout(() => {
-      this.setState({
-        orgStatsLoading: false,
-        orgStats,
-      });
-    }, 3000);
-  }
-
-  /**
-   * Fetches stats of projects that the user has access to
-   */
-  getProjectsStats() {
-    return [];
   }
 
   renderCards() {
@@ -118,7 +64,7 @@ class OrganizationStats extends React.Component<Props, State> {
   }
 
   renderChart() {
-    if (this.state.orgStatsLoading) {
+    if (this.props.orgStatsLoading) {
       return (
         <Panel>
           <PanelBody>
@@ -168,7 +114,7 @@ class OrganizationStats extends React.Component<Props, State> {
   }
 }
 
-export default OrganizationStats;
+export default withOrgStats(OrganizationStats);
 
 const CardWrapper = styled('div')`
   display: grid;
