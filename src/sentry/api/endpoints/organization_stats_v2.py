@@ -23,11 +23,11 @@ CATEGORY_NAME_MAP = {
 
 class OrganizationStatsEndpointV2(OrganizationEndpoint):
     def get(self, request, organization):
-        start, end, rollup = get_date_range_rollup_from_params(request.GET, "1h", round_range=True)
+        start, end, rollup = get_date_range_rollup_from_params(request.query_params, "1h", round_range=True)
         result = outcomes.query(
             start=start,
             end=end,
-            rollup=rollup,
+            rollup=86400,
             groupby=["category", "time", "outcome", "reason"],
             aggregations=[["sum", "times_seen", "times_seen"], ["sum", "quantity", "quantity"]],
             filter_keys={"org_id": [organization.id]},
