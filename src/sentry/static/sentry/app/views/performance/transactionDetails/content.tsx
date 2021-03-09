@@ -198,9 +198,9 @@ class EventDetailsContent extends AsyncComponent<Props, State> {
                     projectId={this.projectId}
                   />
                   <RootSpanStatus event={event} />
+                  <OpsBreakdown event={event} />
                 </React.Fragment>
               )}
-              <OpsBreakdown event={event} />
               <EventVitals event={event} />
               <TagsTable event={event} query={query} generateUrl={this.generateTagUrl} />
             </Layout.Side>
@@ -210,7 +210,7 @@ class EventDetailsContent extends AsyncComponent<Props, State> {
     );
 
     const hasQuickTraceView =
-      organization.features.includes('trace-view-quick') &&
+      organization.features.includes('trace-view-quick') ||
       organization.features.includes('trace-view-summary');
 
     if (hasQuickTraceView) {

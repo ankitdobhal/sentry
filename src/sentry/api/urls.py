@@ -95,12 +95,14 @@ from .endpoints.organization_environments import OrganizationEnvironmentsEndpoin
 from .endpoints.organization_event_details import OrganizationEventDetailsEndpoint
 from .endpoints.organization_eventid import EventIdLookupEndpoint
 from .endpoints.organization_events import (
-    OrganizationEventsEndpoint,
     OrganizationEventsV2Endpoint,
     OrganizationEventsGeoEndpoint,
 )
 from .endpoints.organization_events_histogram import OrganizationEventsHistogramEndpoint
 from .endpoints.organization_events_facets import OrganizationEventsFacetsEndpoint
+from .endpoints.organization_events_facets_performance import (
+    OrganizationEventsFacetsPerformanceEndpoint,
+)
 from .endpoints.organization_events_meta import (
     OrganizationEventsMetaEndpoint,
     OrganizationEventBaseline,
@@ -187,6 +189,11 @@ from .endpoints.organization_sentry_apps import OrganizationSentryAppsEndpoint
 from .endpoints.organization_shortid import ShortIdLookupEndpoint
 from .endpoints.organization_slugs import SlugsUpdateEndpoint
 from .endpoints.organization_stats import OrganizationStatsEndpoint
+from .endpoints.organization_stats_v2 import (
+    OrganizationStatsEndpointV2,
+    OrganizationProjectStatsDetails,
+    OrganizationProjectStatsIndex,
+)
 from .endpoints.organization_tagkey_values import OrganizationTagKeyValuesEndpoint
 from .endpoints.organization_tags import OrganizationTagsEndpoint
 from .endpoints.organization_teams import OrganizationTeamsEndpoint
@@ -250,7 +257,6 @@ from .endpoints.project_searches import ProjectSearchesEndpoint
 from .endpoints.project_servicehook_details import ProjectServiceHookDetailsEndpoint
 from .endpoints.project_servicehook_stats import ProjectServiceHookStatsEndpoint
 from .endpoints.project_servicehooks import ProjectServiceHooksEndpoint
-from .endpoints.project_stats import ProjectStatsEndpoint
 from .endpoints.project_tagkey_details import ProjectTagKeyDetailsEndpoint
 from .endpoints.project_tagkey_values import ProjectTagKeyValuesEndpoint
 from .endpoints.project_tags import ProjectTagsEndpoint
@@ -857,11 +863,6 @@ urlpatterns = [
                     name="sentry-api-0-organization-config-repositories",
                 ),
                 url(
-                    r"^(?P<organization_slug>[^\/]+)/events/$",
-                    OrganizationEventsEndpoint.as_view(),
-                    name="sentry-api-0-organization-events",
-                ),
-                url(
                     r"^(?P<organization_slug>[^\/]+)/sdk-updates/$",
                     OrganizationSdkUpdatesEndpoint.as_view(),
                     name="sentry-api-0-organization-sdk-updates",
@@ -871,7 +872,7 @@ urlpatterns = [
                     OrganizationHasMobileAppEvents.as_view(),
                     name="sentry-api-0-organization-has-mobile-events",
                 ),
-                # This is temporary while we alpha test eventsv2
+                # TODO add an alias for /organizations/:slug/events/ and deprecate eventsv2
                 url(
                     r"^(?P<organization_slug>[^\/]+)/eventsv2/$",
                     OrganizationEventsV2Endpoint.as_view(),
@@ -896,6 +897,11 @@ urlpatterns = [
                     r"^(?P<organization_slug>[^\/]+)/events-facets/$",
                     OrganizationEventsFacetsEndpoint.as_view(),
                     name="sentry-api-0-organization-events-facets",
+                ),
+                url(
+                    r"^(?P<organization_slug>[^\/]+)/events-facets-performance/$",
+                    OrganizationEventsFacetsPerformanceEndpoint.as_view(),
+                    name="sentry-api-0-organization-events-facets-performance",
                 ),
                 url(
                     r"^(?P<organization_slug>[^\/]+)/events-meta/$",
@@ -1215,6 +1221,21 @@ urlpatterns = [
                     r"^(?P<organization_slug>[^\/]+)/stats/$",
                     OrganizationStatsEndpoint.as_view(),
                     name="sentry-api-0-organization-stats",
+                ),
+                url(
+                    r"^(?P<organization_slug>[^\/]+)/stats_v2/$",
+                    OrganizationStatsEndpointV2.as_view(),
+                    name="sentry-api-0-organization-stats-v2",
+                ),
+                url(
+                    r"^(?P<organization_slug>[^\/]+)/stats_v2/projects/$",
+                    OrganizationProjectStatsIndex.as_view(),
+                    name="sentry-api-0-organization-stats-project-index",
+                ),
+                url(
+                    r"^(?P<organization_slug>[^\/]+)/stats_v2/projects/(?P<project_slug>[^\/]+)$",
+                    OrganizationProjectStatsDetails.as_view(),
+                    name="sentry-api-0-organization-stats-projects-details",
                 ),
                 url(
                     r"^(?P<organization_slug>[^\/]+)/teams/$",
@@ -1612,11 +1633,6 @@ urlpatterns = [
                     r"^(?P<organization_slug>[^\/]+)/(?P<project_slug>[^\/]+)/searches/(?P<search_id>[^\/]+)/$",
                     ProjectSearchDetailsEndpoint.as_view(),
                     name="sentry-api-0-project-search-details",
-                ),
-                url(
-                    r"^(?P<organization_slug>[^\/]+)/(?P<project_slug>[^\/]+)/stats/$",
-                    ProjectStatsEndpoint.as_view(),
-                    name="sentry-api-0-project-stats",
                 ),
                 url(
                     r"^(?P<organization_slug>[^\/]+)/(?P<project_slug>[^\/]+)/tags/$",

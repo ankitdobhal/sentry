@@ -693,14 +693,19 @@ class SnubaTestCase(BaseTestCase):
         # While snuba is synchronous, clickhouse isn't entirely synchronous.
         attempt = 0
         snuba_filter = eventstore.Filter(project_ids=[project_id])
+        last_events_seen = 0
+
         while attempt < attempts:
             events = eventstore.get_events(snuba_filter)
+            last_events_seen = len(events)
             if len(events) >= total:
                 break
             attempt += 1
             time.sleep(0.05)
         if attempt == attempts:
-            assert False, f"Could not ensure event was persisted within {attempt} attempt(s)"
+            assert (
+                False
+            ), f"Could not ensure that {total} event(s) were persisted within {attempt} attempt(s). Event count is instead currently {last_events_seen}."
 
     def store_session(self, session):
         assert (
@@ -715,6 +720,15 @@ class SnubaTestCase(BaseTestCase):
         assert (
             requests.post(
                 settings.SENTRY_SNUBA + "/tests/groupedmessage/insert", data=json.dumps(data)
+            ).status_code
+            == 200
+        )
+
+    def store_outcome(self, group):
+        data = [self.__wrap_group(group)]
+        assert (
+            requests.post(
+                settings.SENTRY_SNUBA + "/tests/outcomes/insert", data=json.dumps(data)
             ).status_code
             == 200
         )
@@ -819,20 +833,12 @@ class OutcomesSnubaTest(TestCase):
         super().setUp()
         assert requests.post(settings.SENTRY_SNUBA + "/tests/outcomes/drop").status_code == 200
 
-    def __format(self, org_id, project_id, outcome, timestamp, key_id):
-        return {
-            "project_id": project_id,
-            "timestamp": timestamp.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "org_id": org_id,
-            "reason": None,
-            "key_id": key_id,
-            "outcome": outcome,
-        }
-
-    def store_outcomes(self, org_id, project_id, outcome, timestamp, key_id, num_times):
+    def store_outcomes(self, outcome, num_times=1):
         outcomes = []
         for _ in range(num_times):
-            outcomes.append(self.__format(org_id, project_id, outcome, timestamp, key_id))
+            outcome_copy = outcome.copy()
+            outcome_copy["timestamp"] = outcome_copy["timestamp"].strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            outcomes.append(outcome_copy)
 
         assert (
             requests.post(
