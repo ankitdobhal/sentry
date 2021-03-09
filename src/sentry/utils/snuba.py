@@ -10,6 +10,7 @@ import logging
 import functools
 import os
 import pytz
+import math
 import re
 import time
 import urllib3
@@ -732,7 +733,9 @@ def _bulk_snuba_query(snuba_param_list, headers):
                 raise SnubaError(f"HTTP {response.status}")
 
         # Forward and reverse translation maps from model ids to snuba keys, per column
-        body["data"] = [reverse(d) for d in body["data"]]
+        body["data"] = [
+            {k: (None if math.isnan(v) else v) for k, v in reverse(d).items()} for d in body["data"]
+        ]
         results.append(body)
 
     return results
