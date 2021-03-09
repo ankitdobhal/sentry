@@ -81,15 +81,15 @@ class OrganizationStats extends React.Component<Props, State> {
       (acc, m) => {
         acc.statsForChart.push({
           date: moment(m.ts).format('MMM D'),
-          total: m.accepted.timesSeen + m.filtered.timesSeen, // TODO
-          accepted: m.accepted.timesSeen,
-          filtered: m.filtered.timesSeen,
+          total: m.accepted.times_seen + m.filtered.times_seen, // TODO
+          accepted: m.accepted.times_seen,
+          filtered: m.filtered.times_seen,
           dropped: {},
         });
 
-        acc.accepted += m.accepted.timesSeen;
-        acc.filtered += m.filtered.timesSeen;
-        // TODO: acc.rateLimited += m..timesSeen;
+        acc.accepted += m.accepted.times_seen;
+        acc.filtered += m.filtered.times_seen;
+        // TODO: acc.rateLimited += m..times_seen;
 
         return acc;
       },
@@ -117,6 +117,14 @@ class OrganizationStats extends React.Component<Props, State> {
   }
 
   renderChart() {
+    if (this.props.orgStatsError) {
+      return (
+        <Panel>
+          <PanelBody>Error. Check console.</PanelBody>
+        </Panel>
+      );
+    }
+
     if (this.props.orgStatsLoading || !this.props.orgStats) {
       return (
         <Panel>

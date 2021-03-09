@@ -17,7 +17,7 @@ type Props = {
 const OrganizationStats = (props: Props) => {
   return props.organization.features.includes('usage-stats-graph') ||
     window.localStorage.getItem('ORG_STATS_REDESIGN') ? (
-    <Redesign {...props} />
+    <Redesign {...(props as any)} />
   ) : (
     <Container {...props} />
   );

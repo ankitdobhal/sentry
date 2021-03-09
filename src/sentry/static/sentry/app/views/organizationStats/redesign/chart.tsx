@@ -557,7 +557,7 @@ class ReservedUsageChart extends React.Component<Props, State> {
             })}
           />
         </ChartContainer>
-        {this.renderFooter()}
+        {/* {this.renderFooter()} */}
       </Panel>
     );
   }

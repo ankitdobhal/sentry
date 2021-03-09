@@ -47,25 +47,45 @@ const withOrgStats = <P extends InjectedStatsProps>(
     async getOrganizationStats() {
       const {api, organization} = this.props;
 
-      // TODO: Hardcoded org_slug
-      const results = await api.requestPromise(
-        `/organizations/${organization.slug}/stats_v2`,
-        {
-          method: 'GET',
-          query: {
-            start: moment().subtract(31, 'days').valueOf.toString(),
-            end: moment().valueOf().toString(),
-            rollup: '1d',
-          },
-        }
-      );
+      const fourWeeksAgo = moment().subtract(31, 'days').unix().toString();
+      const today = moment().unix().toString();
 
-      console.log('from api: ', results);
+      console.log(fourWeeksAgo, today);
+
+      // TODO: Hardcoded org_slug
+      try {
+        const orgStats = await api.requestPromise(
+          `/organizations/${organization.slug}/stats_v2/`,
+          {
+            method: 'GET',
+            query: {
+              start: fourWeeksAgo,
+              end: today,
+              rollup: '1d',
+            },
+          }
+        );
+        console.log('from api: ', orgStats);
+
+        this.setState({
+          orgStats,
+          orgStatsLoading: false,
+          orgStatsError: undefined,
+        });
+      } catch (e) {
+        console.error(e);
+        this.setState({
+          orgStats: undefined,
+          orgStatsLoading: false,
+          orgStatsError: e,
+        });
+      }
     }
 
     /**
      * Fetches aggregated stats of tne entire organization
      */
+    /*
     _getOrganizationStats() {
       this.setState({orgStatsLoading: true});
 
@@ -99,6 +119,7 @@ const withOrgStats = <P extends InjectedStatsProps>(
         });
       }, 3000);
     }
+    */
 
     /**
      * Fetches stats of projects that the user has access to

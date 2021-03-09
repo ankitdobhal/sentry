@@ -9,7 +9,7 @@ export enum DataCategory {
 
 export type RawStat = {
   quantity: number; // Counting for attachment size
-  timesSeen: number; // Counting for errors or transactions
+  times_seen: number; // Counting for errors or transactions  // FIXME
 };
 
 export type UsageStat = {
