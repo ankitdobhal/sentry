@@ -2,6 +2,7 @@ import React from 'react';
 import {RouteComponentProps} from 'react-router';
 import styled from '@emotion/styled';
 import capitalize from 'lodash/capitalize';
+import moment from 'moment';
 
 import {Client} from 'app/api';
 import Button from 'app/components/button';
@@ -15,6 +16,7 @@ import {PageContent, PageHeader} from 'app/styles/organization';
 import space from 'app/styles/space';
 import {Organization} from 'app/types';
 
+import Chart from './chart';
 import {DataCategory, OrganizationUsageStats, ProjectUsageStats} from './types';
 import withOrgStats from './withOrgStats';
 
@@ -42,12 +44,63 @@ class OrganizationStats extends React.Component<Props, State> {
     dataCategory: DataCategory.ERRORS,
   };
 
+  componentDidUpdate() {
+    this.mapStatsToChart();
+  }
+
   setSelectedDataCategory = (dataCategory: DataCategory) => {
     this.setState({dataCategory});
   };
 
   get selectedDataCategory() {
     return capitalize(this.state.dataCategory);
+  }
+
+  mapStatsToChart() {
+    const {orgStats} = this.props;
+    const {dataCategory} = this.state;
+
+    if (!orgStats) {
+      return {
+        statsForChart: [] as any[], // TODO/(ts)
+        total: 0,
+        accepted: 0,
+        rateLimited: 0,
+        filtered: 0,
+      };
+    }
+
+    const stats =
+      dataCategory === DataCategory.ERRORS
+        ? orgStats?.statsErrors
+        : dataCategory === DataCategory.TRANSACTIONS
+        ? orgStats?.statsTransactions
+        : orgStats?.statsAttachments;
+
+    return stats.reduce(
+      (acc, m) => {
+        acc.statsForChart.push({
+          date: moment(m.ts).format('MMM D'),
+          total: m.accepted.timesSeen + m.filtered.timesSeen, // TODO
+          accepted: m.accepted.timesSeen,
+          filtered: m.filtered.timesSeen,
+          dropped: {},
+        });
+
+        acc.accepted += m.accepted.timesSeen;
+        acc.filtered += m.filtered.timesSeen;
+        // TODO: acc.rateLimited += m..timesSeen;
+
+        return acc;
+      },
+      {
+        statsForChart: [] as any[], // TODO/(ts)
+        total: 0,
+        accepted: 0,
+        rateLimited: 0,
+        filtered: 0,
+      }
+    );
   }
 
   renderCards() {
@@ -64,7 +117,7 @@ class OrganizationStats extends React.Component<Props, State> {
   }
 
   renderChart() {
-    if (this.props.orgStatsLoading) {
+    if (this.props.orgStatsLoading || !this.props.orgStats) {
       return (
         <Panel>
           <PanelBody>
@@ -74,15 +127,32 @@ class OrganizationStats extends React.Component<Props, State> {
       );
     }
 
+    // const {orgStats} = this.props;
+    const {statsForChart} = this.mapStatsToChart();
+    console.log('mapStatsToChart', statsForChart);
+
+    const today = moment().format('YYYY-MM-DD');
+    const start = moment().subtract(30, 'days').format('YYYY-MM-DD');
+
     return (
       <Panel>
-        <PanelBody>This is the chart</PanelBody>
+        <Chart
+          hasTransactions
+          hasAttachments={false}
+          usagePeriodStart={start}
+          usagePeriodEnd={today}
+          usagePeriodToday={today}
+          statsAttachments={statsForChart}
+          statsErrors={statsForChart}
+          statsTransactions={statsForChart}
+        />
       </Panel>
     );
   }
 
   render() {
     const {dataCategory} = this.state;
+    console.log('orgStats', this.props.orgStats);
 
     return (
       <PageContent>

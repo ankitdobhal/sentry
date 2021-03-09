@@ -3,6 +3,7 @@ import {RouteComponentProps} from 'react-router';
 
 import {Client} from 'app/api';
 import {Organization} from 'app/types';
+import withApi from 'app/utils/withApi';
 import withOrganization from 'app/utils/withOrganization';
 
 import Container from './container';
@@ -22,4 +23,4 @@ const OrganizationStats = (props: Props) => {
   );
 };
 
-export default withOrganization(OrganizationStats);
+export default withApi(withOrganization(OrganizationStats));
