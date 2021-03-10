@@ -14,7 +14,7 @@
 const PLUGIN_NAME = 'OptionalLocaleChunkPlugin';
 
 const clearLocaleChunks = chunks =>
-  chunks
+  Array.from(chunks)
     .filter(chunk => chunk.name !== 'app')
     .forEach(chunk => {
       const mainGroup = Array.from(chunk.groupsIterable)[0];
