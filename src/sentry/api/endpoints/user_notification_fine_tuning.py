@@ -13,6 +13,7 @@ from sentry.models import (
     UserOption,
     UserEmail,
 )
+
 # TODO Remove this import?
 from sentry.notifications.legacy_mappings import FINE_TUNING_KEY_MAP
 
