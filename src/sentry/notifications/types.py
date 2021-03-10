@@ -92,3 +92,19 @@ NOTIFICATION_TARGET_TYPE = {
     NotificationTargetType.USER: "user",
     NotificationTargetType.TEAM: "team",
 }
+
+
+class FineTuningAPIKey(Enum):
+    ALERTS = "alerts"
+    DEPLOY = "deploy"
+    EMAIL = "email"
+    REPORTS = "reports"
+    WORKFLOW = "workflow"
+
+
+class UserOptionsSettingsKey(Enum):
+    DEPLOY = "deployNotifications"
+    SELF_ACTIVITY = "personalActivityNotifications"
+    SELF_ASSIGN = "selfAssignOnResolve"
+    SUBSCRIBE_BY_DEFAULT = "subscribeByDefault"
+    WORKFLOW = "workflowNotifications"

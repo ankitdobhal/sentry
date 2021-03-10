@@ -1,31 +1,34 @@
+from sentry.models.useroption import UserOptionValue
 from sentry.notifications.types import (
+    FineTuningAPIKey,
     NotificationSettingTypes,
     NotificationSettingOptionValues,
+    UserOptionsSettingsKey,
 )
-from sentry.models.useroption import UserOptionValue
+
 
 USER_OPTION_SETTINGS = {
-    "deployNotifications": {
+    UserOptionsSettingsKey.DEPLOY: {
         "key": "deploy-emails",
         "default": UserOptionValue.committed_deploys_only,  # '3'
         "type": int,
     },
-    "personalActivityNotifications": {
+    UserOptionsSettingsKey.SELF_ACTIVITY: {
         "key": "self_notifications",
         "default": UserOptionValue.all_conversations,  # '0'
         "type": bool,
     },
-    "selfAssignOnResolve": {
+    UserOptionsSettingsKey.SELF_ASSIGN: {
         "key": "self_assign_issue",
         "default": UserOptionValue.all_conversations,  # '0'
         "type": bool,
     },
-    "subscribeByDefault": {
+    UserOptionsSettingsKey.SUBSCRIBE_BY_DEFAULT: {
         "key": "subscribe_by_default",
         "default": UserOptionValue.participating_only,  # '1'
         "type": bool,
     },
-    "workflowNotifications": {
+    UserOptionsSettingsKey.WORKFLOW: {
         "key": "workflow:notifications",
         "default": UserOptionValue.participating_only,  # '1'
         "type": int,
@@ -33,11 +36,11 @@ USER_OPTION_SETTINGS = {
 }
 
 FINE_TUNING_KEY_MAP = {
-    "alerts": {"key": "mail:alert", "type": int},
-    "workflow": {"key": "workflow:notifications", "type": ""},
-    "deploy": {"key": "deploy-emails", "type": ""},
-    "reports": {"key": "reports:disabled-organizations", "type": ""},
-    "email": {"key": "mail:email", "type": ""},
+    FineTuningAPIKey.ALERTS: "mail:alert",
+    FineTuningAPIKey.DEPLOY: "deploy-emails",
+    FineTuningAPIKey.EMAIL: "mail:email",
+    FineTuningAPIKey.REPORTS: "reports:disabled-organizations",
+    FineTuningAPIKey.WORKFLOW: "workflow:notifications",
 }
 
 KEYS_TO_LEGACY_KEYS = {
@@ -62,3 +65,78 @@ KEY_VALUE_TO_LEGACY_VALUE = {
         NotificationSettingOptionValues.NEVER: 2,
     },
 }
+
+LEGACY_VALUE_TO_KEY = {
+    NotificationSettingTypes.DEPLOY: {
+        -1: NotificationSettingOptionValues.DEFAULT,
+        2: NotificationSettingOptionValues.ALWAYS,
+        3: NotificationSettingOptionValues.COMMITTED_ONLY,
+        4: NotificationSettingOptionValues.NEVER,
+    },
+    NotificationSettingTypes.ISSUE_ALERTS: {
+        -1: NotificationSettingOptionValues.DEFAULT,
+        0: NotificationSettingOptionValues.NEVER,
+        1: NotificationSettingOptionValues.ALWAYS,
+    },
+    NotificationSettingTypes.WORKFLOW: {
+        -1: NotificationSettingOptionValues.DEFAULT,
+        0: NotificationSettingOptionValues.ALWAYS,
+        1: NotificationSettingOptionValues.SUBSCRIBE_ONLY,
+        2: NotificationSettingOptionValues.NEVER,
+    },
+}
+
+
+def get_legacy_key(type: NotificationSettingTypes) -> str:
+    """
+    Temporary mapping from new enum types to legacy strings.
+
+    :param type: NotificationSettingTypes enum
+    :return: String
+    """
+
+    return KEYS_TO_LEGACY_KEYS.get(type)
+
+
+def get_legacy_value(type: NotificationSettingTypes, value: NotificationSettingOptionValues) -> str:
+    """
+    Temporary mapping from new enum types to legacy strings. Each type has a separate mapping.
+
+    :param type: NotificationSettingTypes enum
+    :param value: NotificationSettingOptionValues enum
+    :return: String
+    """
+
+    return str(KEY_VALUE_TO_LEGACY_VALUE.get(type, {}).get(value))
+
+
+def get_option_value_from_boolean(value: bool) -> NotificationSettingOptionValues:
+    if value:
+        return NotificationSettingOptionValues.ALWAYS
+    else:
+        return NotificationSettingOptionValues.NEVER
+
+
+def get_option_value_from_int(
+    type: NotificationSettingTypes, value: int
+) -> NotificationSettingOptionValues:
+    return LEGACY_VALUE_TO_KEY.get(type, {}).get(value)
+
+
+def get_type_from_fine_tuning_key(key: FineTuningAPIKey) -> NotificationSettingTypes:
+    return {
+        FineTuningAPIKey.ALERTS: NotificationSettingTypes.ISSUE_ALERTS,
+        FineTuningAPIKey.DEPLOY: NotificationSettingTypes.DEPLOY,
+        FineTuningAPIKey.WORKFLOW: NotificationSettingTypes.WORKFLOW,
+    }.get(key)
+
+
+def get_legacy_key_from_fine_tuning_key(key: FineTuningAPIKey) -> str:
+    return FINE_TUNING_KEY_MAP.get(key)
+
+
+def get_type_from_user_option_settings_key(key: UserOptionsSettingsKey) -> NotificationSettingTypes:
+    return {
+        UserOptionsSettingsKey.DEPLOY: NotificationSettingTypes.DEPLOY,
+        UserOptionsSettingsKey.WORKFLOW: NotificationSettingTypes.WORKFLOW,
+    }.get(key)
