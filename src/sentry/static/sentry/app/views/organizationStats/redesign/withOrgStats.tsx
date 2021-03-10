@@ -10,15 +10,8 @@ import {OrganizationUsageStats, ProjectUsageStats} from './types';
 type InjectedStatsProps = {
   api: Client;
   organization: Organization;
-
-  orgStats?: OrganizationUsageStats;
-  orgStatsLoading: boolean;
-  orgStatsError?: Error;
-
-  projectStats?: ProjectUsageStats[];
-  projectStatsLoading: boolean;
-  projectStatsError?: Error;
-} & RouteComponentProps<{orgId: string}, {}>;
+} & State &
+  RouteComponentProps<{orgId: string}, {}>;
 
 type State = {
   orgStats?: OrganizationUsageStats;

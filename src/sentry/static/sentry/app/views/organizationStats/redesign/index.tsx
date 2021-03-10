@@ -8,15 +8,18 @@ import {Client} from 'app/api';
 import Button from 'app/components/button';
 import ButtonBar from 'app/components/buttonBar';
 import Card from 'app/components/card';
+import {HeaderTitle} from 'app/components/charts/styles';
 import LoadingIndicator from 'app/components/loadingIndicator';
 import PageHeading from 'app/components/pageHeading';
 import {Panel, PanelBody} from 'app/components/panels';
 import {t, tct} from 'app/locale';
 import {PageContent, PageHeader} from 'app/styles/organization';
+import overflowEllipsis from 'app/styles/overflowEllipsis';
 import space from 'app/styles/space';
 import {Organization} from 'app/types';
 
 import Chart from './chart';
+import {formatUsageWithUnits} from './fromGetsentry';
 import {DataCategory, OrganizationUsageStats, ProjectUsageStats} from './types';
 import withOrgStats from './withOrgStats';
 
@@ -52,30 +55,36 @@ class OrganizationStats extends React.Component<Props, State> {
     return capitalize(this.state.dataCategory);
   }
 
-  mapStatsToChart() {
+  get formattedOrgStats(): {
+    stats: any[];
+    total: string;
+    accepted: string;
+    rateLimited: string;
+    filtered: string;
+  } {
     const {orgStats} = this.props;
     const {dataCategory} = this.state;
 
     if (!orgStats) {
       return {
-        statsForChart: [] as any[], // TODO/(ts)
-        total: 0,
-        accepted: 0,
-        rateLimited: 0,
-        filtered: 0,
+        stats: [],
+        total: '—',
+        accepted: '—',
+        rateLimited: '—',
+        filtered: '—',
       };
     }
 
-    const stats =
+    const rawStats =
       dataCategory === DataCategory.ERRORS
         ? orgStats?.statsErrors
         : dataCategory === DataCategory.TRANSACTIONS
         ? orgStats?.statsTransactions
         : orgStats?.statsAttachments;
 
-    return stats.reduce(
+    const stats = rawStats.reduce(
       (acc, m) => {
-        acc.statsForChart.push({
+        acc.stats.push({
           date: moment.unix((m as any).time).format('MMM D'),
           total: m.accepted.times_seen + m.filtered.times_seen, // TODO
           accepted: m.accepted.times_seen,
@@ -90,24 +99,62 @@ class OrganizationStats extends React.Component<Props, State> {
         return acc;
       },
       {
-        statsForChart: [] as any[], // TODO/(ts)
+        stats: [] as any[], // TODO/(ts)
         total: 0,
         accepted: 0,
         rateLimited: 0,
         filtered: 0,
       }
     );
+
+    const formatOptions = {
+      isAbbreviated: dataCategory !== DataCategory.ATTACHMENTS,
+      useUnitScaling: dataCategory === DataCategory.ATTACHMENTS,
+    };
+
+    return {
+      ...stats,
+      total: formatUsageWithUnits(stats.total, dataCategory, formatOptions),
+      accepted: formatUsageWithUnits(stats.accepted, dataCategory, formatOptions),
+      rateLimited: formatUsageWithUnits(stats.rateLimited, dataCategory, formatOptions),
+      filtered: formatUsageWithUnits(stats.filtered, dataCategory, formatOptions),
+    };
   }
 
   renderCards() {
+    const {total, accepted, rateLimited, filtered} = this.formattedOrgStats;
+
+    const cardData = [
+      {
+        title: tct('Total [dataCategory]', {dataCategory: this.selectedDataCategory}),
+        value: total,
+      },
+      {
+        title: t('Accepted'),
+        value: accepted,
+      },
+      {
+        title: t('Rate-limited'),
+        value: rateLimited,
+      },
+      {
+        title: t('Filtered'),
+        value: filtered,
+      },
+    ];
+
     return (
       <CardWrapper>
-        <Card>
-          {tct('Total [dataCategory]', {dataCategory: this.selectedDataCategory})}
-        </Card>
-        <Card>{t('Accepted')}</Card>
-        <Card>{t('Rate-limited')}</Card>
-        <Card>{t('Filtered')}</Card>
+        {cardData.map((c, i) => (
+          <StyledCard key={i}>
+            <HeaderTitle>
+              <OverflowEllipsis>{c.title}</OverflowEllipsis>
+            </HeaderTitle>
+            <CardContent>
+              <OverflowEllipsis>{c.value}</OverflowEllipsis>
+            </CardContent>
+          </StyledCard>
+        ))}
       </CardWrapper>
     );
   }
@@ -132,8 +179,8 @@ class OrganizationStats extends React.Component<Props, State> {
     }
 
     // const {orgStats} = this.props;
-    const {statsForChart} = this.mapStatsToChart();
-    console.log('mapStatsToChart', statsForChart);
+    const {dataCategory} = this.state;
+    const {stats} = this.formattedOrgStats;
 
     const today = moment().format('YYYY-MM-DD');
     const start = moment().subtract(30, 'days').format('YYYY-MM-DD');
@@ -146,18 +193,29 @@ class OrganizationStats extends React.Component<Props, State> {
           usagePeriodStart={start}
           usagePeriodEnd={today}
           usagePeriodToday={today}
-          statsAttachments={statsForChart}
-          statsErrors={statsForChart}
-          statsTransactions={statsForChart}
+          statsAttachments={stats}
+          statsErrors={stats}
+          statsTransactions={stats}
         />
+
+        <ButtonBar active={dataCategory} merged>
+          {Object.keys(DataCategory).map(k => {
+            return (
+              <Button
+                key={DataCategory[k]}
+                barId={DataCategory[k]}
+                onClick={() => this.setSelectedDataCategory(DataCategory[k])}
+              >
+                {capitalize(DataCategory[k])}
+              </Button>
+            );
+          })}
+        </ButtonBar>
       </Panel>
     );
   }
 
   render() {
-    const {dataCategory} = this.state;
-    console.log('orgStats', this.props.orgStats);
-
     return (
       <PageContent>
         <PageHeader>
@@ -165,22 +223,9 @@ class OrganizationStats extends React.Component<Props, State> {
             {tct('Organization Usage Stats for [dataCategory]', {
               dataCategory: this.selectedDataCategory,
             })}
-
-            <ButtonBar active={dataCategory} merged>
-              {Object.keys(DataCategory).map(k => {
-                return (
-                  <Button
-                    key={DataCategory[k]}
-                    barId={DataCategory[k]}
-                    onClick={() => this.setSelectedDataCategory(DataCategory[k])}
-                  >
-                    {capitalize(DataCategory[k])}
-                  </Button>
-                );
-              })}
-            </ButtonBar>
           </PageHeading>
         </PageHeader>
+
         {this.renderCards()}
         {this.renderChart()}
       </PageContent>
@@ -201,4 +246,18 @@ const CardWrapper = styled('div')`
   @media (max-width: ${p => p.theme.breakpoints[0]}) {
     grid-auto-flow: row;
   }
+`;
+
+const StyledCard = styled(Card)`
+  align-items: flex-start;
+  min-height: 95px;
+  padding: ${space(2)} ${space(3)};
+  color: ${p => p.theme.textColor};
+`;
+const CardContent = styled('div')`
+  margin-top: ${space(1)};
+  font-size: 32px;
+`;
+const OverflowEllipsis = styled('div')`
+  ${overflowEllipsis};
 `;
