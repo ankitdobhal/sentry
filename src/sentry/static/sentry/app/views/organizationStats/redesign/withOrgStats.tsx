@@ -39,11 +39,8 @@ const withOrgStats = <P extends InjectedStatsProps>(
 
     async getOrganizationStats() {
       const {api, organization} = this.props;
-
-      const fourWeeksAgo = moment().subtract(31, 'days').unix().toString();
-      const today = moment().unix().toString();
-
-      console.log(fourWeeksAgo, today);
+      const fourWeeksAgo = moment().subtract(31, 'days').unix();
+      const today = moment().unix();
 
       // TODO: Hardcoded org_slug
       try {
@@ -58,7 +55,6 @@ const withOrgStats = <P extends InjectedStatsProps>(
             },
           }
         );
-        console.log('from api: ', orgStats);
 
         this.setState({
           orgStats,
@@ -66,7 +62,6 @@ const withOrgStats = <P extends InjectedStatsProps>(
           orgStatsError: undefined,
         });
       } catch (e) {
-        console.error(e);
         this.setState({
           orgStats: undefined,
           orgStatsLoading: false,

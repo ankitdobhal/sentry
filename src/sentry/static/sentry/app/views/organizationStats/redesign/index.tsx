@@ -12,6 +12,7 @@ import {HeaderTitle} from 'app/components/charts/styles';
 import LoadingIndicator from 'app/components/loadingIndicator';
 import PageHeading from 'app/components/pageHeading';
 import {Panel, PanelBody} from 'app/components/panels';
+import QuestionTooltip from 'app/components/questionTooltip';
 import {t, tct} from 'app/locale';
 import {PageContent, PageHeader} from 'app/styles/organization';
 import overflowEllipsis from 'app/styles/overflowEllipsis';
@@ -59,8 +60,9 @@ class OrganizationStats extends React.Component<Props, State> {
     stats: any[];
     total: string;
     accepted: string;
-    rateLimited: string;
+    dropped: string;
     filtered: string;
+    overQuota: string;
   } {
     const {orgStats} = this.props;
     const {dataCategory} = this.state;
@@ -70,8 +72,9 @@ class OrganizationStats extends React.Component<Props, State> {
         stats: [],
         total: '—',
         accepted: '—',
-        rateLimited: '—',
+        dropped: '—',
         filtered: '—',
+        overQuota: '—',
       };
     }
 
@@ -82,19 +85,36 @@ class OrganizationStats extends React.Component<Props, State> {
         ? orgStats?.statsTransactions
         : orgStats?.statsAttachments;
 
+    // TODO(leedongwei): Handle quantity for Attachments
     const stats = rawStats.reduce(
       (acc, m) => {
-        acc.stats.push({
-          date: moment.unix((m as any).time).format('MMM D'),
-          total: m.accepted.times_seen + m.filtered.times_seen, // TODO
-          accepted: m.accepted.times_seen,
-          filtered: m.filtered.times_seen,
-          dropped: {},
-        });
-
         acc.accepted += m.accepted.times_seen;
         acc.filtered += m.filtered.times_seen;
         // TODO: acc.rateLimited += m..times_seen;
+
+        let dropped = 0;
+        if (m.dropped) {
+          Object.keys(m.dropped).forEach(k => {
+            dropped += m.dropped[k].times_seen;
+          });
+
+          if (m.dropped.overQuota) {
+            acc.overQuota += m.dropped.overQuota.times_seen;
+          }
+
+          acc.dropped += dropped;
+        }
+
+        const total = m.accepted.times_seen + m.filtered.times_seen + dropped;
+
+        acc.stats.push({
+          date: moment.unix((m as any).time).format('MMM D'),
+          total,
+          accepted: m.accepted.times_seen,
+          dropped,
+          filtered: m.filtered.times_seen,
+          rateLimited: 0,
+        });
 
         return acc;
       },
@@ -102,8 +122,9 @@ class OrganizationStats extends React.Component<Props, State> {
         stats: [] as any[], // TODO/(ts)
         total: 0,
         accepted: 0,
-        rateLimited: 0,
+        dropped: 0,
         filtered: 0,
+        overQuota: 0,
       }
     );
 
@@ -116,13 +137,15 @@ class OrganizationStats extends React.Component<Props, State> {
       ...stats,
       total: formatUsageWithUnits(stats.total, dataCategory, formatOptions),
       accepted: formatUsageWithUnits(stats.accepted, dataCategory, formatOptions),
-      rateLimited: formatUsageWithUnits(stats.rateLimited, dataCategory, formatOptions),
+      dropped: formatUsageWithUnits(stats.dropped, dataCategory, formatOptions),
       filtered: formatUsageWithUnits(stats.filtered, dataCategory, formatOptions),
+      overQuota: formatUsageWithUnits(stats.overQuota, dataCategory, formatOptions),
     };
   }
 
   renderCards() {
-    const {total, accepted, rateLimited, filtered} = this.formattedOrgStats;
+    const {dataCategory} = this.state;
+    const {total, accepted, overQuota: overQuota, filtered} = this.formattedOrgStats;
 
     const cardData = [
       {
@@ -134,12 +157,20 @@ class OrganizationStats extends React.Component<Props, State> {
         value: accepted,
       },
       {
-        title: t('Rate-limited'),
-        value: rateLimited,
+        title: t('Filtered'),
+        description: tct(
+          'Filtered [dataCategory] were blocked due to your inbound data filter rules',
+          {dataCategory}
+        ),
+        value: filtered,
       },
       {
-        title: t('Filtered'),
-        value: filtered,
+        title: t('Rate-limited'),
+        description: tct(
+          "Rate-limited [dataCategory] were discarded due to usage exceeding your plan's quota.",
+          {dataCategory}
+        ),
+        value: overQuota,
       },
     ];
 
@@ -149,6 +180,9 @@ class OrganizationStats extends React.Component<Props, State> {
           <StyledCard key={i}>
             <HeaderTitle>
               <OverflowEllipsis>{c.title}</OverflowEllipsis>
+              {c.description && (
+                <QuestionTooltip size="sm" position="top" title={c.description} />
+              )}
             </HeaderTitle>
             <CardContent>
               <OverflowEllipsis>{c.value}</OverflowEllipsis>
