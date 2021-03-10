@@ -144,18 +144,24 @@ class NotificationsManager(BaseManager):
         )
         target_type, target_identifier = _get_target(user_id_option, team_id_option)
 
-        value = self.filter(
-            provider=provider.value,
-            type=type.value,
-            scope_type=scope_type,
-            scope_identifier=scope_identifier,
-            target_type=target_type,
-            target_identifier=target_identifier,
-        ).first() or NotificationSettingOptionValues.DEFAULT
+        value = (
+            self.filter(
+                provider=provider.value,
+                type=type.value,
+                scope_type=scope_type,
+                scope_identifier=scope_identifier,
+                target_type=target_type,
+                target_identifier=target_identifier,
+            ).first()
+            or NotificationSettingOptionValues.DEFAULT
+        )
 
-        legacy_value = UserOption.objects.get_value(
-            user, _get_legacy_key(type), project=project, organization=organization
-        ) or NotificationSettingOptionValues.DEFAULT
+        legacy_value = (
+            UserOption.objects.get_value(
+                user, _get_legacy_key(type), project=project, organization=organization
+            )
+            or NotificationSettingOptionValues.DEFAULT
+        )
 
         assert value == legacy_value
 
