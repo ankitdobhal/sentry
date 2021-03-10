@@ -51,10 +51,7 @@ module.exports = {
           },
         ],
       ],
-      plugins: [
-        '@babel/plugin-transform-react-jsx-source',
-        !!process.env.SENTRY_UI_HOT_RELOAD ? 'react-refresh/babel' : null,
-      ].filter(Boolean),
+      plugins: ['@babel/plugin-transform-react-jsx-source'].filter(Boolean),
     },
     test: {
       // Required, see https://github.com/facebook/jest/issues/9430
