@@ -142,6 +142,7 @@ class GroupSubscriptionManager(BaseManager):
             )
         }
 
+        # TODO MARCOS 3
         options = get_user_options(
             "workflow:notifications",
             list(users.keys()),

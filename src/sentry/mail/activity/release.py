@@ -124,6 +124,7 @@ class ReleaseActivityEmail(ActivityEmail):
 
         # get all the involved users' settings for deploy-emails (user default
         # saved without org set)
+        # TODO MARCOS 4
         user_options = UserOption.objects.filter(
             Q(organization=self.organization) | Q(organization=None),
             user__in=users,

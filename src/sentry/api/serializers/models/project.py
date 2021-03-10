@@ -115,6 +115,7 @@ class ProjectSerializer(Serializer):
                         user=user, project_id__in=project_ids
                     ).values_list("project_id", flat=True)
                 )
+                # TODO MARCOS 1
                 user_options = {
                     (u.project_id, u.key): u.value
                     for u in UserOption.objects.filter(
@@ -160,6 +161,7 @@ class ProjectSerializer(Serializer):
                 serialized.update(
                     {
                         "is_bookmarked": project.id in bookmarks,
+                        # TODO MARCOS 1
                         "is_subscribed": bool(
                             user_options.get((project.id, "mail:alert"), default_subscribe)
                         ),

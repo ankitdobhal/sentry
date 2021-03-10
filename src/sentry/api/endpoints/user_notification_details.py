@@ -65,6 +65,7 @@ class UserNotificationDetailsEndpoint(UserEndpoint):
             for key in serializer.validated_data:
                 db_key = USER_OPTION_SETTINGS[key]["key"]
                 val = str(int(serializer.validated_data[key]))
+                # TODO MARCOS FIRST
                 (uo, created) = UserOption.objects.get_or_create(
                     user=user, key=db_key, project=None, organization=None
                 )

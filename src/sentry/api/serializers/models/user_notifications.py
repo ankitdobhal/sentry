@@ -20,6 +20,7 @@ class UserNotificationsSerializer(Serializer):
         elif notification_option_key == "deploy":
             filter_args["organization__isnull"] = False
 
+        # TODO MARCOS I don't think this actually works
         data = list(
             UserOption.objects.filter(
                 key=notification_option_key, user__in=item_list, **filter_args

@@ -47,6 +47,7 @@ class MailAdapter:
     """
 
     mail_option_key = "mail:subject_prefix"
+    # TODO MARCOS 1
     alert_option_key = "mail:alert"
 
     def rule_notify(self, event, futures, target_type, target_identifier=None):

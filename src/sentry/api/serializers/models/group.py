@@ -180,6 +180,8 @@ class GroupSerializerBase(Serializer):
         # a user has totally disabled workflow notifications for a project.
         # NOTE: This doesn't use `values_list` because that bypasses field
         # value decoding, so the `value` field would not be unpickled.
+        # TODO MARCOS 3
+
         options = {
             option.project_id: option.value
             for option in UserOption.objects.filter(

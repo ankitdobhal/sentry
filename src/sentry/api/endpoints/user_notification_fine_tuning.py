@@ -13,6 +13,7 @@ from sentry.models import (
     UserOption,
     UserEmail,
 )
+# TODO Remove this import?
 from sentry.notifications.legacy_mappings import FINE_TUNING_KEY_MAP
 
 
@@ -154,6 +155,7 @@ class UserNotificationFineTuningEndpoint(UserEndpoint):
 
                 filter_args["%s_id" % update_key] = id
 
+                # TODO MARCOS FIRST
                 # 'email' doesn't have a default to delete, and it's a string
                 # -1 is a magic value to use "default" value, so just delete option
                 if int_val == -1:

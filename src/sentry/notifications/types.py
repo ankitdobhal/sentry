@@ -92,3 +92,20 @@ NOTIFICATION_TARGET_TYPE = {
     NotificationTargetType.USER: "user",
     NotificationTargetType.TEAM: "team",
 }
+
+
+class FineTuningAPIKey(Enum):
+    ALERTS = "alerts"
+    DEPLOY = "deploy"
+    EMAIL = "email"
+    REPORTS = "reports"
+    WORKFLOW = "workflow"
+
+
+FINE_TUNING_KEY_MAP = {
+    FineTuningAPIKey.ALERTS: "mail:alert",
+    FineTuningAPIKey.DEPLOY: "deploy-emails",
+    FineTuningAPIKey.EMAIL: "mail:email",
+    FineTuningAPIKey.REPORTS: "reports:disabled-organizations",
+    FineTuningAPIKey.WORKFLOW: "workflow:notifications",
+}
