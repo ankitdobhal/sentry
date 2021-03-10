@@ -88,24 +88,22 @@ class OrganizationStats extends React.Component<Props, State> {
     // TODO(leedongwei): Handle quantity for Attachments
     const stats = rawStats.reduce(
       (acc, m) => {
-        acc.accepted += m.accepted.times_seen;
-        acc.filtered += m.filtered.times_seen;
-        // TODO: acc.rateLimited += m..times_seen;
-
+        // Calculate tallies for the specified interval
         let dropped = 0;
         if (m.dropped) {
           Object.keys(m.dropped).forEach(k => {
             dropped += m.dropped[k].times_seen;
           });
-
-          if (m.dropped.overQuota) {
-            acc.overQuota += m.dropped.overQuota.times_seen;
-          }
-
-          acc.dropped += dropped;
         }
 
         const total = m.accepted.times_seen + m.filtered.times_seen + dropped;
+
+        // Calculate tallies for the entire time period
+        acc.total += total;
+        acc.accepted += m.accepted.times_seen;
+        acc.dropped += dropped;
+        acc.filtered += m.filtered.times_seen;
+        acc.overQuota += m.dropped.overQuota?.times_seen || 0;
 
         acc.stats.push({
           date: moment.unix((m as any).time).format('MMM D'),
@@ -113,7 +111,7 @@ class OrganizationStats extends React.Component<Props, State> {
           accepted: m.accepted.times_seen,
           dropped,
           filtered: m.filtered.times_seen,
-          rateLimited: 0,
+          rateLimited: m.dropped.overQuota?.times_seen || 0,
         });
 
         return acc;
